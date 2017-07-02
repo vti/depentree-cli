@@ -29,4 +29,4 @@ else {
     die "Can't detect dependencies\n";
 }
 
-print JSON->new->pretty->encode( \%modules );
+print JSON->new->canonical->pretty->encode( \%modules );
