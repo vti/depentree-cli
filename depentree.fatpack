@@ -1743,4 +1743,4 @@ else {
     die "Can't detect dependencies\n";
 }
 
-print JSON->new->canonical(1)->pretty->encode(\%modules);
+print JSON->new->canonical(1)->pretty->encode([ map { { module => $_, version => $modules{$_} } } keys %modules ]);
