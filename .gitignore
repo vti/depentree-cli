@@ -1,0 +1,11 @@
+*.swp
+tmp/
+cover_db/
+perl5/
+
+plugins/
+backups/
+local/
+build/
+deploy/*.rc
+config/

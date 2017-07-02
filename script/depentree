@@ -1,0 +1,32 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use Class::Load qw(try_load_class);
+use Module::CPANfile;
+use JSON qw(encode_json);
+
+my %modules;
+
+if (-f 'cpanfile') {
+    my $file = Module::CPANfile->load('cpanfile');
+
+    my $prereqs = $file->prereqs->merged_requirements->as_string_hash;
+
+  PREREQ: foreach my $prereq (keys %$prereqs) {
+        try_load_class($prereq) or do {
+            warn "Can't load '$prereq': $@\n";
+            next PREREQ;
+        };
+
+        my $version = $prereq->VERSION;
+
+        $modules{$prereq} = $version;
+    }
+}
+else {
+    die "Can't detect dependencies\n";
+}
+
+print encode_json(\%modules) . "\n";
