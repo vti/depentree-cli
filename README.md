@@ -2,6 +2,14 @@
 
 Collects your installed dependencies with versions and prints JSON object compatible for uploading to <http://depentree.com>.
 
+## Run without installation
+
+```
+curl 'https://raw.githubusercontent.com/vti/depentree-cli/master/depentree.fatpack' | perl
+```
+
+## Usage example
+
 ```
 $ depentree
 {
