@@ -1719,7 +1719,7 @@ use warnings;
 
 use Class::Load qw(try_load_class);
 use Module::CPANfile;
-use JSON qw(encode_json);
+use JSON;
 
 my %modules;
 
@@ -1743,4 +1743,4 @@ else {
     die "Can't detect dependencies\n";
 }
 
-print encode_json(\%modules) . "\n";
+print JSON->new->pretty->encode( \%modules );
