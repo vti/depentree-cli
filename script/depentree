@@ -5,6 +5,7 @@ use warnings;
 
 use Class::Load ();
 use Module::CPANfile;
+use Module::CoreList;
 use JSON;
 
 my %modules;
@@ -15,6 +16,8 @@ if (-f 'cpanfile') {
     my $prereqs = $file->prereqs->merged_requirements->as_string_hash;
 
   PREREQ: foreach my $prereq (keys %$prereqs) {
+        next if Module::CoreList::is_core($prereq);
+
         Class::Load::try_load_class($prereq) or do {
             warn "Can't load '$prereq': $@\n";
             next PREREQ;
