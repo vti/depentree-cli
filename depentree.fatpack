@@ -6,7 +6,7 @@ BEGIN {
 my %fatpacked;
 
 $fatpacked{"App/Depentree.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'APP_DEPENTREE';
-  package App::Depentree;use strict;use warnings;use Config;use Module::CoreList;use Class::Load ();use File::Spec;use File::chdir;use App::Depentree::Cpanfile;use App::Depentree::Dzil;sub new {my$class=shift;my (%params)=@_;my$self={};bless$self,$class;$self->{root}=$params{root};$self->{lib}=$params{lib};return$self}sub venga {my$self=shift;local$CWD=$self->{root};my@OLD_INC=@INC;if (my$lib=$self->{lib}){my@lib=split /,|\:/,$lib;for my$path (@lib){if (-d "$path/lib/perl5"){unshift@INC,"$path/lib/perl5";unshift@INC,"$path/lib/perl5/$Config{archname}"}else {unshift@INC,$path}}}my@prereqs=$self->parse_prereqs;my%modules;PREREQ: foreach my$prereq (@prereqs){next if$prereq eq 'perl';next if Module::CoreList::is_core($prereq);Class::Load::try_load_class($prereq)or do {warn "Can't load '$prereq': $@\n";next PREREQ};my$version=$prereq->VERSION;$modules{$prereq}=$version}@INC=@OLD_INC;return \%modules}sub parse_prereqs {my$self=shift;my%files=(cpanfile=>'cpanfile',dzil=>'dist.ini');for my$type (keys%files){if (-f $files{$type}){my$parser=$self->_build_parser($type);die "Unknown parser $parser\n" unless$parser;return$parser->parse($files{$type})}}die "ERROR: Can't detect dependencies\n"}sub _build_parser {my$self=shift;my ($parser)=@_;if ($parser eq 'cpanfile'){return App::Depentree::Cpanfile->new}elsif ($parser eq 'dzil'){return App::Depentree::Dzil->new}return}1;
+  package App::Depentree;use strict;use warnings;our$VERSION='0.01';use Config;use Module::CoreList;use Class::Load ();use File::Spec;use File::chdir;use App::Depentree::Cpanfile;use App::Depentree::Dzil;sub new {my$class=shift;my (%params)=@_;my$self={};bless$self,$class;$self->{root}=$params{root};$self->{lib}=$params{lib};return$self}sub venga {my$self=shift;local$CWD=$self->{root};my@OLD_INC=@INC;if (my$lib=$self->{lib}){my@lib=split /,|\:/,$lib;for my$path (@lib){if (-d "$path/lib/perl5"){unshift@INC,"$path/lib/perl5";unshift@INC,"$path/lib/perl5/$Config{archname}"}else {unshift@INC,$path}}}my@prereqs=$self->parse_prereqs;my%modules;PREREQ: foreach my$prereq (@prereqs){next if$prereq eq 'perl';next if Module::CoreList::is_core($prereq);Class::Load::try_load_class($prereq)or do {warn "Can't load '$prereq': $@\n";next PREREQ};my$version=$prereq->VERSION;$modules{$prereq}=$version}@INC=@OLD_INC;return \%modules}sub parse_prereqs {my$self=shift;my%files=(cpanfile=>'cpanfile',dzil=>'dist.ini');for my$type (keys%files){if (-f $files{$type}){my$parser=$self->_build_parser($type);die "Unknown parser $parser\n" unless$parser;return$parser->parse($files{$type})}}die "ERROR: Can't detect dependencies\n"}sub _build_parser {my$self=shift;my ($parser)=@_;if ($parser eq 'cpanfile'){return App::Depentree::Cpanfile->new}elsif ($parser eq 'dzil'){return App::Depentree::Dzil->new}return}1;
 APP_DEPENTREE
 
 $fatpacked{"App/Depentree/Cpanfile.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'APP_DEPENTREE_CPANFILE';
@@ -16,6 +16,10 @@ APP_DEPENTREE_CPANFILE
 $fatpacked{"App/Depentree/Dzil.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'APP_DEPENTREE_DZIL';
   package App::Depentree::Dzil;use strict;use warnings;use Config::Tiny;sub new {my$class=shift;my$self={};bless$self,$class;return$self}sub parse {my$self=shift;my ($file)=@_;my$dist_ini=Config::Tiny->read($file);my$prereqs=$dist_ini->{Prereqs};return ()unless$prereqs && ref$prereqs eq 'HASH';return keys %$prereqs}1;
 APP_DEPENTREE_DZIL
+
+$fatpacked{"App/Depentree/Submitter.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'APP_DEPENTREE_SUBMITTER';
+  package App::Depentree::Submitter;use strict;use warnings;use HTTP::Tiny;use JSON ();use App::Depentree;my$API_ENDPOINT=($ENV{DEPENTREE_ADDRESS}|| 'http://depentree.com').'/submit_dependencies';sub new {my$class=shift;my (%params)=@_;my$self={};bless$self,$class;$self->{token}=$params{token};$self->{dependencies}=$params{dependencies};return$self}sub submit {my$self=shift;my$dependencies=JSON::encode_json($self->{dependencies});my$ua=$self->_build_ua;my$response;for my$i (1 .. 3){$response=$ua->post_form($API_ENDPOINT,{token=>$self->{token},dependencies=>$dependencies });last if$response->{success};last unless$response->{status}eq '599';warn "Retrying in ${i}s because of $response->{reason}: $response->{content}...\n";$self->_sleep($i)}if (!$response->{success}){my$error=$response->{reason};if ($response->{status}eq '599'){$error .= ': ' .$response->{content}}die "Error: $error\n" unless$response->{success}}}sub _sleep {shift;sleep(@_)}sub _build_ua {my$self=shift;my$class=ref$self;my$version=App::Depentree->VERSION;return HTTP::Tiny->new(agent=>"$class/$version ")}1;
+APP_DEPENTREE_SUBMITTER
 
 $fatpacked{"Class/Load.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'CLASS_LOAD';
   use strict;use warnings;package Class::Load;our$VERSION='0.24';use base 'Exporter';use Data::OptList ();use Module::Implementation 0.04;use Module::Runtime 0.012 ();use Try::Tiny;{my$loader=Module::Implementation::build_loader_sub(implementations=>['XS','PP' ],symbols=>['is_class_loaded'],);$loader->()}our@EXPORT_OK=qw/load_class load_optional_class try_load_class is_class_loaded load_first_existing_class/;our%EXPORT_TAGS=(all=>\@EXPORT_OK,);our$ERROR;sub load_class {my$class=shift;my$options=shift;my ($res,$e)=try_load_class($class,$options);return$class if$res;_croak($e)}sub load_first_existing_class {my$classes=Data::OptList::mkopt(\@_)or return;for my$class (@{$classes}){Module::Runtime::check_module_name($class->[0])}for my$class (@{$classes}){my ($name,$options)=@{$class};return$name if is_class_loaded($name,($options ? $options : ()));my ($res,$e)=try_load_class($name,$options);return$name if$res;my$file=Module::Runtime::module_notional_filename($name);next if$e =~ /^Can't locate \Q$file\E in \@INC/;next if$options && defined$options->{-version}&& $e =~ _version_fail_re($name,$options->{-version});_croak("Couldn't load class ($name) because: $e")}my@list=map {$_->[0].($_->[1]&& defined $_->[1]{-version}? " (version >= $_->[1]{-version})" : q{})}@{$classes};my$err .= q{Can't locate } ._or_list(@list)." in \@INC (\@INC contains: @INC).";_croak($err)}sub _version_fail_re {my$name=shift;my$vers=shift;return qr/\Q$name\E version \Q$vers\E required--this is only version/}sub _nonexistent_fail_re {my$name=shift;my$file=Module::Runtime::module_notional_filename($name);return qr/Can't locate \Q$file\E in \@INC/}sub _or_list {return $_[0]if @_==1;return join ' or ',@_ if @_==2;my$last=pop;my$list=join ', ',@_;$list .= ', or ' .$last;return$list}sub load_optional_class {my$class=shift;my$options=shift;Module::Runtime::check_module_name($class);my ($res,$e)=try_load_class($class,$options);return 1 if$res;return 0 if$options && defined$options->{-version}&& $e =~ _version_fail_re($class,$options->{-version});return 0 if$e =~ _nonexistent_fail_re($class);_croak($e)}sub try_load_class {my$class=shift;my$options=shift;Module::Runtime::check_module_name($class);local $@;undef$ERROR;if (is_class_loaded($class)){return 1 unless$options && defined$options->{-version};return try {$class->VERSION($options->{-version});1}catch {_error($_)}}my$file=Module::Runtime::module_notional_filename($class);delete$INC{$file};return try {local$SIG{__DIE__}='DEFAULT';if ($options && defined$options->{-version}){Module::Runtime::use_module($class,$options->{-version})}else {Module::Runtime::require_module($class)}1}catch {_error($_)}}sub _error {my$e=shift;$e =~ s/ at .+?Runtime\.pm line [0-9]+\.$//;chomp$e;$ERROR=$e;return 0 unless wantarray;return 0,$ERROR}sub _croak {require Carp;local$Carp::CarpLevel=$Carp::CarpLevel + 2;Carp::croak(shift)}1;
@@ -1744,14 +1748,34 @@ use warnings;
 use Getopt::Long;
 use JSON;
 use App::Depentree;
+use App::Depentree::Submitter;
 
 my $opt_root = '.';
 my $opt_lib;
-GetOptions('root=s' => \$opt_root, 'lib=s' => \$opt_lib)
-  or die("Error in command line arguments\n");
+my $opt_submit;
+GetOptions(
+    'root=s' => \$opt_root,
+    'lib=s'  => \$opt_lib,
+    'submit' => \$opt_submit
+) or die("Error in command line arguments\n");
 
-my $modules = App::Depentree->new(root => $opt_root, lib => $opt_lib)->venga;
+if ($opt_submit && !$ENV{DEPENTREE_TOKEN}) {
+    die "When using --submit option DEPENTREE_TOKEN has to be set\n";
+}
 
-print JSON->new->canonical(1)
-  ->pretty->encode(
-    [ sort { $a->{module} cmp $b->{module} } map { { module => $_, version => $modules->{$_} } } keys %$modules ]);
+my $modules = App::Depentree->new(
+    root => $opt_root,
+    lib  => $opt_lib,
+)->venga;
+
+my $dependencies =
+  [ sort { $a->{module} cmp $b->{module} } map { { module => $_, version => $modules->{$_} } } keys %$modules ];
+
+if ($opt_submit) {
+    App::Depentree::Submitter->new(token => $ENV{DEPENTREE_TOKEN}, dependencies => $dependencies)->submit;
+
+    print "Submitted\n";
+}
+else {
+    print JSON->new->canonical(1)->pretty->encode($dependencies);
+}

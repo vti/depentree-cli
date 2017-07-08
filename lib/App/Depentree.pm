@@ -3,6 +3,8 @@ package App::Depentree;
 use strict;
 use warnings;
 
+our $VERSION = '0.01';
+
 use Config;
 use Module::CoreList;
 use Class::Load ();

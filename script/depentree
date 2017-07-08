@@ -6,14 +6,34 @@ use warnings;
 use Getopt::Long;
 use JSON;
 use App::Depentree;
+use App::Depentree::Submitter;
 
 my $opt_root = '.';
 my $opt_lib;
-GetOptions('root=s' => \$opt_root, 'lib=s' => \$opt_lib)
-  or die("Error in command line arguments\n");
+my $opt_submit;
+GetOptions(
+    'root=s' => \$opt_root,
+    'lib=s'  => \$opt_lib,
+    'submit' => \$opt_submit
+) or die("Error in command line arguments\n");
 
-my $modules = App::Depentree->new(root => $opt_root, lib => $opt_lib)->venga;
+if ($opt_submit && !$ENV{DEPENTREE_TOKEN}) {
+    die "When using --submit option DEPENTREE_TOKEN has to be set\n";
+}
 
-print JSON->new->canonical(1)
-  ->pretty->encode(
-    [ sort { $a->{module} cmp $b->{module} } map { { module => $_, version => $modules->{$_} } } keys %$modules ]);
+my $modules = App::Depentree->new(
+    root => $opt_root,
+    lib  => $opt_lib,
+)->venga;
+
+my $dependencies =
+  [ sort { $a->{module} cmp $b->{module} } map { { module => $_, version => $modules->{$_} } } keys %$modules ];
+
+if ($opt_submit) {
+    App::Depentree::Submitter->new(token => $ENV{DEPENTREE_TOKEN}, dependencies => $dependencies)->submit;
+
+    print "Submitted\n";
+}
+else {
+    print JSON->new->canonical(1)->pretty->encode($dependencies);
+}

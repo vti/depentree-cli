@@ -10,25 +10,40 @@ curl 'https://raw.githubusercontent.com/vti/depentree-cli/master/depentree.fatpa
 
 ## Usage example
 
+### Submit directly to Depentree.com
+
 ```
+$ cd my-perl-project/
+$ export DEPENTREE_TOKEN=98f9f5b5147058d71ce2ba09ae91cacfd79f53c0
+$ depentree --submit
+Submitted
+```
+
+### Only print the results (for manual import)
+
+```
+$ cd my-perl-project/
 $ depentree
-{
-    "Test::Fatal": "0.014",
-    "Test::TempDir::Tiny": "0.016",
-    "YAML::Tiny": "1.70",
-    "Plack": "1.0044",
-    "Test::MonkeyMock": "0.09",
-    "Capture::Tiny": "0.46",
-    "CPAN::Changes": "0.400002",
-    "ObjectDB": "3.20",
-    "experimental": "0.016",
-    "Type::Tiny": "1.002001",
-    "DBIx::Inspector": "0.12",
-    "Time::Moment": "0.42",
-    "Test::Deep": "1.127",
-    "JSON::XS": "3.03",
-    "DBD::Pg": "3.5.3",
-    "Moo": "2.003002",
-    "Test::More": "1.001014"
-}
+[
+   {
+      "module" : "Class::Load",
+      "version" : "0.24"
+   },
+   {
+      "module" : "Config::Tiny",
+      "version" : "2.23"
+   },
+   {
+      "module" : "File::chdir",
+      "version" : "0.1010"
+   },
+   {
+      "module" : "JSON",
+      "version" : "2.94"
+   },
+   {
+      "module" : "Module::CPANfile",
+      "version" : "1.1002"
+   }
+]
 ```
