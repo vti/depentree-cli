@@ -3,33 +3,17 @@
 use strict;
 use warnings;
 
-use Class::Load ();
-use Module::CPANfile;
-use Module::CoreList;
+use Getopt::Long;
 use JSON;
+use App::Depentree;
 
-my %modules;
+my $opt_root = '.';
+my $opt_lib;
+GetOptions('root=s' => \$opt_root, 'lib=s' => \$opt_lib)
+  or die("Error in command line arguments\n");
 
-if (-f 'cpanfile') {
-    my $file = Module::CPANfile->load('cpanfile');
+my $modules = App::Depentree->new(root => $opt_root, lib => $opt_lib)->venga;
 
-    my $prereqs = $file->prereqs->merged_requirements->as_string_hash;
-
-  PREREQ: foreach my $prereq (keys %$prereqs) {
-        next if Module::CoreList::is_core($prereq);
-
-        Class::Load::try_load_class($prereq) or do {
-            warn "Can't load '$prereq': $@\n";
-            next PREREQ;
-        };
-
-        my $version = $prereq->VERSION;
-
-        $modules{$prereq} = $version;
-    }
-}
-else {
-    die "Can't detect dependencies\n";
-}
-
-print JSON->new->canonical(1)->pretty->encode([ map { { module => $_, version => $modules{$_} } } keys %modules ]);
+print JSON->new->canonical(1)
+  ->pretty->encode(
+    [ sort { $a->{module} cmp $b->{module} } map { { module => $_, version => $modules->{$_} } } keys %$modules ]);
