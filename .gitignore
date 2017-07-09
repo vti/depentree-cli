@@ -11,3 +11,7 @@ deploy/*.rc
 config/
 
 App-Depentree-*
+Build
+MYMETA.*
+_build_params
+blib/
