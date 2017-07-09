@@ -9,3 +9,5 @@ local/
 build/
 deploy/*.rc
 config/
+
+App-Depentree-*

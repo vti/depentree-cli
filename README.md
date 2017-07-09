@@ -1,49 +1,36 @@
-# Depentree-cli
+# NAME
 
-Collects your installed dependencies with versions and prints JSON object compatible for uploading to <http://depentree.com>.
+App::Depentree - Depentree.com command line
 
-## Run without installation
+# SYNOPSIS
 
-```
-curl 'https://raw.githubusercontent.com/vti/depentree-cli/master/depentree.fatpack' | perl
-```
+    $ cd my-perl-project/
+    $ export DEPENTREE_TOKEN=98f9f5b5147058d71ce2ba09ae91cacfd79f53c0
+    $ depentree --submit
+    Submitted
 
-## Usage example
+    # or without installation
 
-### Submit directly to Depentree.com
+    curl 'https://raw.githubusercontent.com/vti/depentree-cli/master/depentree.fatpack' | perl
 
-```
-$ cd my-perl-project/
-$ export DEPENTREE_TOKEN=98f9f5b5147058d71ce2ba09ae91cacfd79f53c0
-$ depentree --submit
-Submitted
-```
+# DESCRIPTION
 
-### Only print the results (for manual import)
+Collects your installed dependencies with versions and prints JSON object compatible for uploading to
+[http://depentree.com](http://depentree.com).
 
-```
-$ cd my-perl-project/
-$ depentree
-[
-   {
-      "module" : "Class::Load",
-      "version" : "0.24"
-   },
-   {
-      "module" : "Config::Tiny",
-      "version" : "2.23"
-   },
-   {
-      "module" : "File::chdir",
-      "version" : "0.1010"
-   },
-   {
-      "module" : "JSON",
-      "version" : "2.94"
-   },
-   {
-      "module" : "Module::CPANfile",
-      "version" : "1.1002"
-   }
-]
-```
+# DEVELOPMENT
+
+## Repository
+
+    http://github.com/vti/depentree-cli
+
+# AUTHOR
+
+Viacheslav Tykhanovskyi, `vti@cpan.org`.
+
+# COPYRIGHT AND LICENSE
+
+Copyright (C) 2017, Viacheslav Tykhanovskyi
+
+This program is free software, you can redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.

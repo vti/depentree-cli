@@ -105,3 +105,43 @@ sub _build_parser {
 }
 
 1;
+__END__
+
+=head1 NAME
+
+App::Depentree - Depentree.com command line
+
+=head1 SYNOPSIS
+
+    $ cd my-perl-project/
+    $ export DEPENTREE_TOKEN=98f9f5b5147058d71ce2ba09ae91cacfd79f53c0
+    $ depentree --submit
+    Submitted
+
+    # or without installation
+
+    curl 'https://raw.githubusercontent.com/vti/depentree-cli/master/depentree.fatpack' | perl
+
+=head1 DESCRIPTION
+
+Collects your installed dependencies with versions and prints JSON object compatible for uploading to
+L<http://depentree.com>.
+
+=head1 DEVELOPMENT
+
+=head2 Repository
+
+    http://github.com/vti/depentree-cli
+
+=head1 AUTHOR
+
+Viacheslav Tykhanovskyi, C<vti@cpan.org>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2017, Viacheslav Tykhanovskyi
+
+This program is free software, you can redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.
+
+=cut
