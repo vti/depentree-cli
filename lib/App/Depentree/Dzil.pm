@@ -20,10 +20,14 @@ sub parse {
 
     my $dist_ini = Config::Tiny->read($file);
 
-    my $prereqs = $dist_ini->{Prereqs};
-    return () unless $prereqs && ref $prereqs eq 'HASH';
+    my %prereqs;
+    foreach my $section (keys %$dist_ini) {
+        if ($section =~ m{^\s*Prereqs\s*(?:/\s*(?:Runtime|Test)Requires)?}) {
+            %prereqs = (%prereqs, %{ $dist_ini->{$section} || {} });
+        }
+    }
 
-    return keys %$prereqs;
+    return keys %prereqs;
 }
 
 1;
