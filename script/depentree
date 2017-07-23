@@ -21,13 +21,10 @@ if ($opt_submit && !$ENV{DEPENTREE_TOKEN}) {
     die "When using --submit option DEPENTREE_TOKEN has to be set\n";
 }
 
-my $modules = App::Depentree->new(
+my $dependencies = App::Depentree->new(
     root => $opt_root,
     lib  => $opt_lib,
 )->venga;
-
-my $dependencies =
-  [ sort { $a->{module} cmp $b->{module} } map { { module => $_, version => $modules->{$_} } } keys %$modules ];
 
 if ($opt_submit) {
     App::Depentree::Submitter->new(token => $ENV{DEPENTREE_TOKEN}, dependencies => $dependencies)->submit;

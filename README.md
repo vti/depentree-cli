@@ -18,6 +18,8 @@ App::Depentree - Depentree.com command line
 Collects your installed dependencies with versions and prints JSON object compatible for uploading to
 [http://depentree.com](http://depentree.com).
 
+The following files are detected: `cpanfile.snapshot`, `cpanfile`, `dzil.ini`.
+
 # DEVELOPMENT
 
 ## Repository

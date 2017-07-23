@@ -7,7 +7,7 @@ use HTTP::Tiny;
 use JSON ();
 use App::Depentree;
 
-my $API_ENDPOINT = ($ENV{DEPENTREE_ADDRESS} || 'http://depentree.com') . '/submit_dependencies';
+my $API_ENDPOINT = ($ENV{DEPENTREE_ADDRESS} || 'https://depentree.com') . '/submit_dependencies';
 
 sub new {
     my $class = shift;

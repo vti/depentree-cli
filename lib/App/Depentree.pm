@@ -5,13 +5,12 @@ use warnings;
 
 our $VERSION = '0.01';
 
-use Config;
-use Module::CoreList;
-use Class::Load ();
 use File::Spec;
 use File::chdir;
 use App::Depentree::Cpanfile;
 use App::Depentree::Dzil;
+use App::Depentree::Lookuper::CpanfileSnapshot;
+use App::Depentree::Lookuper::Local;
 
 sub new {
     my $class = shift;
@@ -20,8 +19,8 @@ sub new {
     my $self = {};
     bless $self, $class;
 
-    $self->{root} = $params{root};
-    $self->{lib}  = $params{lib};
+    $self->{root} = $params{root} // '.';
+    $self->{lib} = $params{lib};
 
     return $self;
 }
@@ -31,42 +30,9 @@ sub venga {
 
     local $CWD = $self->{root};
 
-    my @OLD_INC = @INC;
-
-    if (my $lib = $self->{lib}) {
-        my @lib = split /,|\:/, $lib;
-
-        foreach my $path (@lib) {
-            if (-d "$path/lib/perl5") {
-                unshift @INC, "$path/lib/perl5";
-                unshift @INC, "$path/lib/perl5/$Config{archname}";
-            }
-            else {
-                unshift @INC, $path;
-            }
-        }
-    }
-
     my @prereqs = $self->parse_prereqs;
 
-    my %modules;
-  PREREQ: foreach my $prereq (@prereqs) {
-        next if $prereq eq 'perl';
-        next if Module::CoreList::is_core($prereq);
-
-        Class::Load::try_load_class($prereq) or do {
-            warn "Can't load '$prereq': $@\n";
-            next PREREQ;
-        };
-
-        my $version = $prereq->VERSION;
-
-        $modules{$prereq} = $version;
-    }
-
-    @INC = @OLD_INC;
-
-    return \%modules;
+    return $self->lookup(\@prereqs);
 }
 
 sub parse_prereqs {
@@ -88,6 +54,40 @@ sub parse_prereqs {
     }
 
     die "ERROR: Can't detect dependencies\n";
+}
+
+sub lookup {
+    my $self = shift;
+    my ($prereqs) = @_;
+
+    my $type = 'local';
+    if (-f File::Spec->catfile($self->{root}, 'cpanfile.snapshot')) {
+        $type = 'cpanfile_snapshot';
+    }
+
+    my $lookuper = $self->_build_lookuper($type);
+
+    my $dependencies = $lookuper->lookup($prereqs);
+
+    $dependencies =
+      [ sort { defined $a->{module} ? ($a->{module} cmp $b->{module}) : ($a->{distribution} cmp $b->{distribution}) }
+          @$dependencies ];
+
+    return $dependencies;
+}
+
+sub _build_lookuper {
+    my $self = shift;
+    my ($type) = @_;
+
+    if ($type eq 'local') {
+        return App::Depentree::Lookuper::Local->new;
+    }
+    elsif ($type eq 'cpanfile_snapshot') {
+        return App::Depentree::Lookuper::CpanfileSnapshot->new(root => $self->{root});
+    }
+
+    return;
 }
 
 sub _build_parser {
@@ -126,6 +126,9 @@ App::Depentree - Depentree.com command line
 
 Collects your installed dependencies with versions and prints JSON object compatible for uploading to
 L<http://depentree.com>.
+
+Prerequisites are detected from C<cpanfile>, C<dist.ini> and their versions are resolved from locally installed cripts
+or from C<cpanfile.snapshot>.
 
 =head1 DEVELOPMENT
 
